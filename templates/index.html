@@ -1,0 +1,27 @@
+{% extends "base.html" %} {% block title %} metrics tracker {% endblock title %} 
+
+{% block content %}
+    {% for tracker in trackers %}
+    <div class="tracker m-1 p-2 flex-auto bg-white border-{% cycle 'red' 'green' 'blue' 'red' 'pink' %}-500 border-l-8 shadow">
+      <h3 class="name text-xl capitalize mb-2">
+        {{ tracker.name }}
+      </h3>
+
+      {% if tracker.hours_this_week %}
+      <div class="hours-this-week">
+        <span class="text-4xl">{{ tracker.hours_this_week }}</span> hours this week
+      </div>
+      {% endif %}
+
+      <div class="records mt-4 text-sm">
+        <ul>
+          Sessions: (Add | Remove)
+          {% for record in tracker.records.all %}
+          <li>{{ record.date }}: {{ record.num_hours }} hours</li>
+          {% endfor %}
+        </li>
+      </div>
+
+    </div>
+    {% endfor %}
+{% endblock content %}
