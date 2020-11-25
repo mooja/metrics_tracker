@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if form.fields.id.data %}
-<form action="/tracker/{{ tracker.id }}" method="post">
+
+{% if tracker.id %}
+    <form action="{% url 'view_tracker' tracker.id %}" method="post">
 {% else%}
-<form action="/tracker/new/" method="post">
+    <form action="{% url 'add_tracker' %}" method="post">
 {% endif %}
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Submit">
-</form>
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit">
+    </form>
 {% endblock content %}

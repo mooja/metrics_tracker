@@ -1,27 +1,27 @@
-{% extends "base.html" %} {% block title %} metrics tracker {% endblock title %} 
+{% extends "base.html" %} {% block title %} metrics tracker {% endblock title %}
+{% block content %} 
 
-{% block content %}
-    {% for tracker in trackers %}
-    <div class="tracker m-1 p-2 flex-auto bg-white border-{% cycle 'red' 'green' 'blue' 'red' 'pink' %}-500 border-l-8 shadow">
-      <h3 class="name text-xl capitalize mb-2">
-        {{ tracker.name }}
-      </h3>
+{% for tracker in trackers %}
+<div class="w-1/3 h-40 m-1 py-3 px-2 flex-auto 
+    bg-{% cycle 'red' 'green' 'blue' 'yellow' 'pink' %}-100 
+    border-{% cycle 'red' 'green' 'blue' 'yellow' 'pink' %}-500 
+    border-l-8 shadow flex flex-row flex-nowrap">
 
-      {% if tracker.hours_this_week %}
-      <div class="hours-this-week">
-        <span class="text-4xl">{{ tracker.hours_this_week }}</span> hours this week
-      </div>
-      {% endif %}
+  <div class="info w-2/3">
+    <h3 class="name text-xl capitalize mb-1">{{ tracker.name }}</h3>
 
-      <div class="records mt-4 text-sm">
-        <ul>
-          Sessions: (Add | Remove)
-          {% for record in tracker.records.all %}
-          <li>{{ record.date }}: {{ record.num_hours }} hours</li>
-          {% endfor %}
-        </li>
-      </div>
+    {% if tracker.hours_this_week %}
+    <p class="hours-this-week my-4">
+      <span class="text-4xl">{{ tracker.hours_this_week }}</span> hours this
+      week
+    </p>
+    <p class="text-sm"><a href="{% url 'view_tracker' tracker.id %}">Sessions</a></p>
+    {% endif %}
 
-    </div>
-    {% endfor %}
-{% endblock content %}
+  </div>
+  <div class="w-1/3 flex flex-row text-center justify-center content-center items-center bg-{% cycle 'red' 'green' 'blue' 'yellow' 'pink' %}-300 ">
+  add form
+  
+  </div>
+</div>
+{% endfor %} {% endblock content %}

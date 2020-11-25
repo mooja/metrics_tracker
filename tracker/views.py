@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, reverse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, get_list_or_404
 
@@ -13,7 +13,7 @@ def index(request):
 
 
 def record_detail(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RecordForm(request.POST)
         if form.is_valid():
             return HttpResponse("Form submittion succesful.")
@@ -22,24 +22,21 @@ def record_detail(request):
 
 
 def tracker_detail(request, id=None):
-    if request.method == 'POST':
-        form = TrackerForm(request.POST)
-        if form.is_valid():
-            tracker = Tracker(form.cleaned_data)
-            tracker.save()
-            return HttpResponse("Form submittion succesful.")
-        return render(request, "tracker/tracker_detail.html", {'form': form})
-
+    if id:
+        tracker = get_object_or_404(Tracker, id=id)
+        form = TrackerForm(request.POST, instance=tracker)
     else:
-        if id:
-            tracker = get_object_or_404(Tracker, id=id)
-        else:
-            tracker = Tracker()
+        form = TrackerForm(request.POST)
+        tracker = None
 
-        form = TrackerForm(instance=tracker)
-        return render(request, "tracker/tracker_detail.html", {'form': form})
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('home'))
 
+    return render(
+        request, "tracker/tracker_detail.html", {"form": form, "tracker": tracker}
+    )
 
-def tracker_list(request):
-    trackers = Tracker.objects.all()
-    return render(request, "tracker/tracker_list.html", {"trackers": trackers})
+def tracker_delete(request, id):
+    pass
