@@ -18,9 +18,9 @@ class Tracker(models.Model):
 
 class Record(models.Model):
     tracker = models.ForeignKey(
-        Tracker, blank=False, null=False, on_delete=models.DO_NOTHING,
+        Tracker, blank=True, null=False, on_delete=models.CASCADE,
         related_name="records",
         related_query_name="record"
     )
-    date = models.DateField(null=False)
+    date = models.DateField(null=False, default=datetime.date.today())
     num_hours = models.IntegerField(null=False)

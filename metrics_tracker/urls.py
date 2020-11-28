@@ -17,7 +17,9 @@ from django.urls import path
 from tracker import views
 
 urlpatterns = [
-    path('', views.index, name='home'),
-    path('tracker/', views.tracker_detail, name='add_tracker'),
-    path('tracker/<int:id>/', views.tracker_detail, name='view_tracker')
+    path("", views.index, name="home"),
+    path("tracker/", views.tracker_detail, name="add_tracker"),
+    path("tracker/<int:id>/", views.tracker_detail, name="view_tracker"),
+    path("tracker/delete/<int:id>", views.tracker_delete, name="delete_tracker"),
+    path("tracker/<int:id>/records/", views.record_detail, name="add_record"),
 ]

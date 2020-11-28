@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
+{% load crispy_forms_tags %}
+
+
 {% block content %}
+
+{% if form.tracker.errors %}
+    <ol>
+    {% for error in form.tracker.errors %}
+        <li><strong>{{ error|escape }}</strong></li>
+    {% endfor %}
+    </ol>
+{% endif %}
 
 {% if tracker.id %}
     <form action="{% url 'view_tracker' tracker.id %}" method="post">
@@ -8,7 +19,17 @@
     <form action="{% url 'add_tracker' %}" method="post">
 {% endif %}
         {% csrf_token %}
-        {{ form }}
+        {{ form|crispy }}
         <input type="submit" value="Submit">
     </form>
+
+{% if tracker.id %}
+<form action="{% url 'delete_tracker' tracker.id %}" class="mt-5" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Delete Tracker" class="bg-red-500 px-2 py-1 rounded">
+</form>
+{% endif %}
+</from>
+
+
 {% endblock content %}
