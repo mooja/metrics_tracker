@@ -1,14 +1,15 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% load tailwind_filters %}
 
-{% block title %} metrics tracker {% endblock title %}
+{% load crispy_forms_tags %}
+  
+{% block title %} Gwen's Metrics Tracker {% endblock title %} 
 
-{% block content %} 
-<div class="w-full py-4 flex flex-row flex-wrap justify-center">
-
-{% for tracker, form, color in trackers_and_forms_and_colors %}
-  {% include "tracker/index_record.html" with tracker=tracker form=form color=color %}
-{% endfor %}
-</div>
+{% block content %}
+  <div class="w-full py-4 flex flex-row flex-wrap justify-start">
+    {% for tracker, form, color in trackers_and_forms_and_colors %}
+      {% include "tracker/index_tracker.html" with tracker=tracker form=form color=color %} 
+    {% endfor %}
+  </div>
 {% endblock content %}

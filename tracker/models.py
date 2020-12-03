@@ -1,19 +1,41 @@
+from collections import namedtuple
+
 from django.db import models
 import datetime
+from datetime import timedelta
 
 
 # Create your models here.
 class Tracker(models.Model):
     name = models.CharField(max_length=200)
     tracker_type_choices = [("H", "Hours Spent"), ("B", "Boolean")]
-    tracker_type = models.CharField(max_length=2, choices=tracker_type_choices)
+    tracker_type = models.CharField(max_length=2, choices=tracker_type_choices, default="H")
 
     def hours_this_week(self):
-        week_ago = datetime.date.today() - datetime.timedelta(weeks=1)
-        records_this_week = Record.objects.all().filter(tracker=self, date__gte=week_ago)
+        start = datetime.date.today()
+        while start.isoweekday() != 1:
+            start = start - timedelta(days=1)
+
+        records_this_week = Record.objects.all().filter(tracker=self, date__gte=start)  # pylint: disable=no-member
         hours_this_week = sum(r.num_hours for r in records_this_week)
         return hours_this_week
+    
 
+    def prev_weeks(self, num_weeks=4):
+        start = datetime.date.today()
+        while start.isoweekday() != 1:
+            start = start - timedelta(days=1)
+        start = start - timedelta(weeks=1)
+
+        WeekRecord = namedtuple("WeekRecord", "start, end, sum_hours")
+        for _ in range(num_weeks):
+            end = start + timedelta(weeks=1)
+            sum_hours = sum(r.num_hours 
+                for r in Record.objects.all()  # pylint: disable=no-member
+                            .filter(tracker=self, date__gte=start, date__lte=end)
+            )
+            yield WeekRecord(start, end, sum_hours)
+            start = start - timedelta(weeks=1)
 
 
 class Record(models.Model):

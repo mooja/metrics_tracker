@@ -2,34 +2,46 @@
 
 {% load crispy_forms_tags %}
 
+{% block errors %}
+  {% if form.errors %}
+  {% endif %}
+
+  {% if record_form.errors %}
+  {% endif %}
+
+{% endblock errors%}
 
 {% block content %}
+    <style>
+        .help-inline, .asteriskName, .control-label, .help-block {
+            display: none;
+        }
+    </style>
 
-{% if form.tracker.errors %}
-    <ol>
-    {% for error in form.tracker.errors %}
-        <li><strong>{{ error|escape }}</strong></li>
-    {% endfor %}
-    </ol>
-{% endif %}
 
-{% if tracker.id %}
-    <form action="{% url 'view_tracker' tracker.id %}" method="post">
-{% else%}
-    <form action="{% url 'add_tracker' %}" method="post">
-{% endif %}
-        {% csrf_token %}
-        {{ form|crispy }}
-        <input type="submit" value="Submit">
-    </form>
+    <div class="forms flex flex-row nowrap">
+        {% crispy form %}
 
-{% if tracker.id %}
-<form action="{% url 'delete_tracker' tracker.id %}" class="mt-5" method="post">
-    {% csrf_token %}
-    <input type="submit" value="Delete Tracker" class="bg-red-500 px-2 py-1 rounded">
-</form>
-{% endif %}
-</from>
+        {% if tracker.id %}
+            <form action="{% url 'tracker_delete' tracker.id %}" method="post" class="my-2 flex-initial border border-white">
+                {% csrf_token %}
+                <input type="submit" value="Delete Tracker" class="m-3 bg-red-500 rounded">
+            </form>
+        {% endif %}
+    </div>
 
+    {% if record_form %}
+        <ul class="w-full mt-4 rounded flex flex-col">
+            <li class="mb-4 flex-initial">
+                {% crispy record_form %}
+            </li>
+
+            {% for record_form in record_forms %}
+                <li class="mb-1 flex-initial">
+                    {% crispy record_form  %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
 {% endblock content %}

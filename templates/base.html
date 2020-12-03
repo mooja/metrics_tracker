@@ -14,26 +14,14 @@
   {% block css %}
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
   {% endblock %}
-
 </head>
 
 <body class="bg-gray-200">
   <div class="top w-full bg-blue-400">
-    <nav class="w-3/5 m-auto px-3">
-      <ul class="h-12 flex flex-row items-center content-center">
-        <li class="flex-initial h-full border-gray-200 border-r-2 border-l-2 p-3">
-          <a href="{% url 'home' %}">
-            Home
-          </a>
-        </li>
-        <li class="flex-initial h-full border-gray-200 border-r-2 p-3">
-          <a href="{% url 'add_tracker' %}">
-            New Tracker
-          </a>
-        </li>
-      </ul>
-    </nav>
+    {% include "nav.html" %}
   </div>
+  {% block errors %}
+  {% endblock %}
   {% if messages %}
   <ul class="messages w-full bg-yellow-400 p-5 text-lg">
       {% for message in messages %}
