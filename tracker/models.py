@@ -8,8 +8,6 @@ from datetime import timedelta
 # Create your models here.
 class Tracker(models.Model):
     name = models.CharField(max_length=200)
-    tracker_type_choices = [("H", "Hours Spent"), ("B", "Boolean")]
-    tracker_type = models.CharField(max_length=2, choices=tracker_type_choices, default="H")
 
     def hours_this_week(self):
         start = datetime.date.today()

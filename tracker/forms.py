@@ -41,7 +41,6 @@ class TrackerForm(forms.ModelForm):
                   placeholder="Tracker Name",
                   css_class="mb-2 px-2 py-1 bg-white text-xl rounded",
             ),
-            Div(Field("tracker_type"), css_class=""),
         )
 
         if not self.instance.id:
@@ -56,10 +55,7 @@ class TrackerForm(forms.ModelForm):
 
     class Meta:
         model = Tracker
-        fields = ("name", "tracker_type", "action")
-        widgets = {
-            "tracker_type": forms.RadioSelect(choices=Tracker.tracker_type_choices)
-        }
+        fields = ("name", "action")
 
 
 class RecordForm(forms.ModelForm):
