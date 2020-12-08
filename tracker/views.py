@@ -15,7 +15,7 @@ from tracker.forms import RecordForm, TrackerForm
 
 def index(request):
     trackers = Tracker.objects.all()  # pylint:disable=no-member
-    forms = (RecordForm(tracker=t, initial={"tracker_id": t.id }) for t in Tracker.objects.all())  # pylint:disable=no-member
+    forms = (RecordForm(initial={'tracker': t.id}, fh_data={'tracker_id': t.id, 'index_view': True}) for t in Tracker.objects.all())  # pylint:disable=no-member
     colors = cycle(('blue', 'green', 'red', 'purple'))
     trackers_and_forms_and_colors = zip(trackers, forms, colors)
 
@@ -50,15 +50,16 @@ def tracker_detail(request, id=None, delete=False):
                 return HttpResponse(f"Action {form.cleaned_data['action']} is not implemented.")
     
 
-    tracker = get_object_or_404(Tracker, id=id) if id else Tracker()
     context = {}
-    context["form"] = TrackerForm(instance=tracker) if id else TrackerForm()
-
-    if id:
-        context["record_form"] = RecordForm(tracker=tracker)
+    if not id:
+        context["form"] = TrackerForm()
+    else:
+        tracker = get_object_or_404(Tracker, id=id)
+        context["form"] = TrackerForm(instance=tracker)
+        context["record_form"] = RecordForm(initial={'tracker': tracker.id}, fh_data={'index_view': False, 'tracker_id': id})
         context["record_forms"] = (
-            RecordForm(tracker=tracker, instance=r)
-            for r in Record.objects.all().filter(tracker_id=id)  # pylint: disable=no-member
+            RecordForm(instance=r, fh_data={'index_view': False, 'tracker_id': id, 'record_id': r.id})
+            for r in Record.objects.all().filter(tracker__id=id).order_by('-date')  # pylint: disable=no-member
         )
 
     return render(request, "tracker/tracker_detail.html", context)
@@ -67,35 +68,41 @@ def tracker_detail(request, id=None, delete=False):
 @require_POST
 def record_detail(request, tracker_id, record_id=None):
     tracker = get_object_or_404(Tracker, id=tracker_id)
-    form = RecordForm(request.POST, tracker=tracker)
+    fh_data = {'tracker_id': tracker.id, 'record_id': record_id}
+    if record_id:
+        record = get_object_or_404(Record, id=record_id)
+        form = RecordForm(request.POST, instance=record, fh_data=fh_data)
+    else:
+        record = Record(tracker=tracker)
+        form = RecordForm(request.POST, instance=record, fh_data=fh_data)
 
     if not form.is_valid():
-        messages.error(request, "Error in form submission.")
+        messages.error(request, f"Error in form submission: {form.errors}")
         return tracker_detail(request, id=tracker_id)
     
     if form.cleaned_data["action"] == "add":
         record = Record(date=datetime.date.today(), tracker=tracker)
-        form = RecordForm(request.POST, tracker=tracker, instance=record)
+        form = RecordForm(request.POST, instance=record, fh_data=fh_data)
         form.is_valid()
         form.save()
         messages.success(request, "Added a new record.")
-        return redirect("tracker_detail", tracker.id)
+        return redirect("home")
     
     if form.cleaned_data["action"] == "update":
         record = get_object_or_404(Record, id=record_id)
-        form = RecordForm(request.POST, tracker=tracker, instance=record)
+        form = RecordForm(request.POST, instance=record, fh_data=fh_data)
         form.is_valid()
         form.save()
         messages.success(request, "Updated record.")
-        return redirect("tracker_detail", tracker.id)
+        return redirect(reverse("tracker_detail", kwargs={'id': tracker.id}))
 
     if form.cleaned_data["action"] == "delete":
         record = get_object_or_404(Record, id=record_id)
-        form = RecordForm(request.POST, tracker=tracker, instance=record)
+        form = RecordForm(request.POST, instance=record, fh_data=fh_data)
         form.is_valid()
         record.delete()
         messages.success(request, "Deleted record.")
-        return redirect("tracker_detail", tracker.id)
+        return redirect(reverse("tracker_detail", kwargs={'id': tracker.id}))
 
     return HttpResponse("Not implemented.")
 

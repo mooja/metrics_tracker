@@ -29,7 +29,7 @@ class TrackerForm(forms.ModelForm):
         self.helper.form_method = "post"
         self.helper.form_class = "w-full my-2 py-3 px-2 border border-white "
 
-        if "instance" in kwargs and kwargs["instance"].id:
+        if self.instance and self.instance.id:
             self.helper.form_action = reverse(
                 f"tracker_detail", kwargs={"id": kwargs["instance"].id}
             )
@@ -61,35 +61,41 @@ class TrackerForm(forms.ModelForm):
 class RecordForm(forms.ModelForm):
     action = forms.CharField(required=True, validators=[validate_action])
 
-    def __init__(self, *args, tracker=None, **kwargs):
+    def __init__(self, *args, fh_data, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "post"
-        self.helper.form_class = "w-full border rounded"
+        self.helper.form_class = "w-full"
 
-        if "instance" in kwargs and kwargs["instance"].id:
-            self.helper.form_action = reverse(
-                "record_detail", kwargs={
-                    "tracker_id": tracker.id,
-                    "record_id": kwargs["instance"].id
-                }
-            )
+        if fh_data.get('record_id', False):
+            self.helper.form_action = reverse("record_detail", kwargs={'tracker_id': fh_data["tracker_id"], 'record_id': fh_data["record_id"]})
         else:
-            self.helper.form_action = reverse("record_detail", kwargs={
-                "tracker_id": tracker.id
-            })
+            self.helper.form_action = reverse("record_detail", kwargs={'tracker_id': fh_data["tracker_id"]})
 
-        self.helper.layout = Layout(
+
+        index_layout = Layout(
+            HTML("<strong> index page record form </strong>")
+        )
+
+        record_detai_layout = Layout(
             Div(
                 Field("num_hours", css_class="w-12 px-1 py-2 mr-2 text-center flex-initial rounded border border-blue-500"),
                 HTML(" hour session on "),
                 Field("date", type="date", css_class="w-32 mx-2 px-1 py-2 text-center border border-blue-500 rounded "),
                 Submit("action", "update" if self.instance.id else "add", css_class="p-2 m-1 bg-blue-300 border rounded"),
                 Submit("action", "delete", css_class="p-2 m-1 bg-red-300 border rounded") if self.instance.id else None,
+                "tracker",
+                HTML("{{ form.erros }}"),
                 css_class="flex flex-row items-center",
             )
         )
+
+        self.helper.layout = index_layout if fh_data.get("index_view", False) else record_detai_layout
+
     
     class Meta:
         model = Record
-        fields = ("num_hours", "date", "action")
+        fields = ("tracker", "num_hours", "date", "action")
+        widgets = {
+            "tracker": forms.HiddenInput(),
+        }

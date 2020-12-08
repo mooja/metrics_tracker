@@ -20,13 +20,17 @@
   <div class="top w-full bg-blue-400">
     {% include "nav.html" %}
   </div>
+
   {% block errors %}
+    {{ form.errors }}
   {% endblock %}
+
   {% if messages %}
   <ul class="messages w-full bg-yellow-400 p-5 text-lg">
       {% for message in messages %}
         <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
+
   </ul>
   {% endif %}
 <main class="w-3/5 m-auto">

@@ -19,7 +19,12 @@ class Tracker(models.Model):
         return hours_this_week
     
 
-    def prev_weeks(self, num_weeks=4):
+    def hours_last_week(self):
+        hours = sum(r.sum_hours for r in self.prev_weeks_records(1))
+        return hours
+    
+
+    def prev_weeks_records(self, num_weeks=4):
         start = datetime.date.today()
         while start.isoweekday() != 1:
             start = start - timedelta(days=1)
