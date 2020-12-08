@@ -18,7 +18,6 @@ def index(request):
     forms = (RecordForm(initial={'tracker': t.id}, fh_data={'tracker_id': t.id, 'index_view': True}) for t in Tracker.objects.all())  # pylint:disable=no-member
     colors = cycle(('blue', 'green', 'red', 'purple'))
     trackers_and_forms_and_colors = zip(trackers, forms, colors)
-
     context = {"trackers": trackers, "trackers_and_forms_and_colors": trackers_and_forms_and_colors}
     return render(request, "index.html", context)
 

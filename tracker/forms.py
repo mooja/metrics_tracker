@@ -65,7 +65,7 @@ class RecordForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "post"
-        self.helper.form_class = "w-full"
+        self.helper.form_class = "w-full p-0"
 
         if fh_data.get('record_id', False):
             self.helper.form_action = reverse("record_detail", kwargs={'tracker_id': fh_data["tracker_id"], 'record_id': fh_data["record_id"]})
@@ -74,7 +74,14 @@ class RecordForm(forms.ModelForm):
 
 
         index_layout = Layout(
-            HTML("<strong> index page record form </strong>")
+            Div(
+                HTML("<style>label { display: none }</style>"),
+                "tracker",
+                Field("num_hours", placeholder="New session time.", css_class="w-full px-1 py-2 mb-1 text-center text-lg"),
+                Field("date", widget=forms.HiddenInput(), css_class="hidden"),
+                Submit("action", "add", css_class="w-1/2 px-1 py-2 capitalize"),
+                css_class="flex flex-col justify-center items-center"
+            )
         )
 
         record_detai_layout = Layout(
