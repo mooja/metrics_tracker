@@ -1,6 +1,6 @@
 {% load crispy_forms_tags %}
 
-<div class="flex-initial w-1/4 my-1 mx-2 py-3 px-2 
+<div class="flex-initial w-48 my-1 py-3 px-2 
     bg-{{ color }}-100 
     border-{{ color }}-500 
     border-t-4
@@ -26,9 +26,8 @@
       {{ tracker.hours_last_week }} hours last week
     </p>
     {% endif %}
-
   </div>
-  <div class="p-1 bg-{{ color }}-300 flex justify-center content-center items-center">
+  <div class="p-1 bg-{{ color }}-300 mt-auto flex justify-start content-center items-center">
       {% crispy form %}
   </div>
 </div>
