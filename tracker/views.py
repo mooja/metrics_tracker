@@ -12,49 +12,13 @@ from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib import messages
+from django.core.cache import cache
 
 import numpy as np
 from matplotlib.figure import Figure
 
 from tracker.models import Tracker, Record
 from tracker.forms import RecordForm, TrackerForm
-
-
-def dates_this_week():
-    monday = datetime.date.today()
-    while monday.isoweekday() != 1:
-        monday = monday - datetime.timedelta(days=1)
-    dates= [monday + datetime.timedelta(days=i) for i in range(7)]
-    dates.sort()
-    return dates
-
-
-def week_plot(request):
-    trackers = Tracker.objects.all()  # pylint: disable=no-member
-    figure = Figure(figsize=(8, 2))
-    ax = figure.subplots()
-
-    width = 0.20
-    colors = cycle(('blue', 'green', 'red', 'purple'))
-
-    for i, t in enumerate(trackers):
-        dates = dict()
-        for d in dates_this_week():
-            dates[d] = 0
-
-        records = Record.objects.all().filter(tracker=t, date__gte=min(dates.keys()))  # pylint: disable=no-member
-        for r in records:
-            dates[r.date] += r.num_hours
-        
-        dates, values = zip(*sorted(dates.items()))
-        dates = [d.strftime('%a') for d in dates]
-        locations = [x+width*i for x in range(7)]
-        ax.bar(locations, values, tick_label=dates, width=width, color=next(colors))  # pylint:disable=no-member
-
-    figure.tight_layout()
-    buf = BytesIO()
-    figure.savefig(buf, format='svg')
-    return HttpResponse(buf.getbuffer(), content_type="image/svg+xml")
 
 
 def index(request):
@@ -73,6 +37,7 @@ def tracker_detail(request, id=None, delete=False):
     if request.method == "POST":
         form = TrackerForm(request.POST)
         if form.is_valid():
+            cache.delete('week_plot')
             if form.cleaned_data["action"] == "add":
                 form.save()
                 messages.success(request, "Tracker created.")
@@ -125,6 +90,8 @@ def record_detail(request, tracker_id, record_id=None):
     if not form.is_valid():
         messages.error(request, f"Error in form submission: {form.errors}")
         return tracker_detail(request, id=tracker_id)
+
+    cache.delete('week_plot')
     
     if form.cleaned_data["action"] == "add":
         record = Record(date=datetime.date.today(), tracker=tracker)
@@ -158,3 +125,46 @@ def tracker_delete(request, id):
     tracker = get_object_or_404(Tracker, id=id)
     tracker.delete()
     return redirect("home")
+
+
+
+def dates_this_week():
+    monday = datetime.date.today()
+    while monday.isoweekday() != 1:
+        monday = monday - datetime.timedelta(days=1)
+    dates= [monday + datetime.timedelta(days=i) for i in range(7)]
+    dates.sort()
+    return dates
+
+
+def week_plot(request):
+    image = cache.get('week_plot')
+    if image:
+        return HttpResponse(image, content_type="image/svg+xml")
+
+    trackers = Tracker.objects.all()  # pylint: disable=no-member
+    figure = Figure(figsize=(8, 2))
+    ax = figure.subplots()
+
+    width = 0.20
+    colors = cycle(('blue', 'green', 'red', 'purple'))
+
+    for i, t in enumerate(trackers):
+        dates = dict()
+        for d in dates_this_week():
+            dates[d] = 0
+
+        records = Record.objects.all().filter(tracker=t, date__gte=min(dates.keys()))  # pylint: disable=no-member
+        for r in records:
+            dates[r.date] += r.num_hours
+        
+        dates, values = zip(*sorted(dates.items()))
+        dates = [d.strftime('%a') for d in dates]
+        locations = [x+width*i for x in range(7)]
+        ax.bar(locations, values, tick_label=dates, width=width, color=next(colors))  # pylint:disable=no-member
+
+    figure.tight_layout()
+    buf = BytesIO()
+    figure.savefig(buf, format='svg')
+    cache.set('week_plot', buf.getvalue())
+    return HttpResponse(buf.getbuffer(), content_type="image/svg+xml")
