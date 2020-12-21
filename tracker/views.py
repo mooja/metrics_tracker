@@ -1,6 +1,10 @@
 import datetime
+import base64
+
+from io import BytesIO
 
 from itertools import cycle
+from collections import defaultdict
 
 from django.shortcuts import render, reverse, redirect
 from django.http import HttpResponse
@@ -9,8 +13,50 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib import messages
 
+import numpy as np
+from matplotlib.figure import Figure
+
 from tracker.models import Tracker, Record
 from tracker.forms import RecordForm, TrackerForm
+
+
+def dates_this_week():
+    start = datetime.date.today()
+    dates = [start]
+    while start.isoweekday() != 1:
+        start = start - datetime.timedelta(days=1)
+        dates.append(start)
+    dates.sort()
+    return dates
+
+
+def generate_this_weeks_plot():
+    trackers = Tracker.objects.all()  # pylint: disable=no-member
+    figure = Figure(figsize=(8, 2))
+    ax = figure.subplots()
+
+    width = 0.25
+    colors = cycle(('blue', 'green', 'red', 'purple'))
+
+    for i, t in enumerate(trackers):
+        dates = dict()
+        for d in dates_this_week():
+            dates[d] = 0
+
+        records = Record.objects.all().filter(tracker=t, date__gte=min(dates.keys()))  # pylint: disable=no-member
+        for r in records:
+            dates[r.date] += r.num_hours
+        
+        dates, values = zip(*sorted(dates.items()))
+        locations = [x-width+width*i for x in range(7)]
+        ax.bar(locations, values, width=.25, color=next(colors))  # pylint:disable=no-member
+
+    figure.tight_layout()
+    buf = BytesIO()
+    figure.savefig(buf, format='svg')
+    data = base64.b64encode(buf.getbuffer()).decode("ascii")
+    plot_image = f"<img class='w-full' src='data:image/svg+xml;base64,{data}'/>"
+    return plot_image
 
 
 def index(request):
@@ -18,7 +64,13 @@ def index(request):
     forms = (RecordForm(initial={'tracker': t.id}, fh_data={'tracker_id': t.id, 'index_view': True}) for t in Tracker.objects.all())  # pylint:disable=no-member
     colors = cycle(('blue', 'green', 'red', 'purple'))
     trackers_and_forms_and_colors = zip(trackers, forms, colors)
-    context = {"trackers": trackers, "trackers_and_forms_and_colors": trackers_and_forms_and_colors}
+    plot_image = generate_this_weeks_plot()
+
+    context = {
+        "trackers": trackers,
+        "trackers_and_forms_and_colors": trackers_and_forms_and_colors,
+        "plot_image": plot_image
+    }
     return render(request, "index.html", context)
 
 
@@ -111,3 +163,7 @@ def tracker_delete(request, id):
     tracker = get_object_or_404(Tracker, id=id)
     tracker.delete()
     return redirect("home")
+
+
+def week_plot(request):
+    pass

@@ -61,7 +61,7 @@ class TrackerForm(forms.ModelForm):
 class RecordForm(forms.ModelForm):
     action = forms.CharField(required=True, validators=[validate_action])
 
-    def __init__(self, *args, fh_data, **kwargs):
+    def __init__(self, *args, fh_data={}, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "post"
