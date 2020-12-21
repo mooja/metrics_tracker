@@ -21,11 +21,10 @@ from tracker.forms import RecordForm, TrackerForm
 
 
 def dates_this_week():
-    start = datetime.date.today()
-    dates = [start]
-    while start.isoweekday() != 1:
-        start = start - datetime.timedelta(days=1)
-        dates.append(start)
+    monday = datetime.date.today()
+    while monday.isoweekday() != 1:
+        monday = monday - datetime.timedelta(days=1)
+    dates= [monday + datetime.timedelta(days=i) for i in range(7)]
     dates.sort()
     return dates
 
@@ -35,7 +34,7 @@ def generate_this_weeks_plot():
     figure = Figure(figsize=(8, 2))
     ax = figure.subplots()
 
-    width = 0.25
+    width = 0.20
     colors = cycle(('blue', 'green', 'red', 'purple'))
 
     for i, t in enumerate(trackers):
@@ -48,8 +47,9 @@ def generate_this_weeks_plot():
             dates[r.date] += r.num_hours
         
         dates, values = zip(*sorted(dates.items()))
-        locations = [x-width+width*i for x in range(7)]
-        ax.bar(locations, values, width=.25, color=next(colors))  # pylint:disable=no-member
+        dates = [d.strftime('%a') for d in dates]
+        locations = [x+width*i for x in range(7)]
+        ax.bar(locations, values, tick_label=dates, width=width, color=next(colors))  # pylint:disable=no-member
 
     figure.tight_layout()
     buf = BytesIO()
