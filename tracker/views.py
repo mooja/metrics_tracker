@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from django.shortcuts import render, reverse, redirect
 from django.http import HttpResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib import messages
@@ -29,7 +29,7 @@ def dates_this_week():
     return dates
 
 
-def generate_this_weeks_plot():
+def week_plot(request):
     trackers = Tracker.objects.all()  # pylint: disable=no-member
     figure = Figure(figsize=(8, 2))
     ax = figure.subplots()
@@ -54,9 +54,7 @@ def generate_this_weeks_plot():
     figure.tight_layout()
     buf = BytesIO()
     figure.savefig(buf, format='svg')
-    data = base64.b64encode(buf.getbuffer()).decode("ascii")
-    plot_image = f"<img class='w-full' src='data:image/svg+xml;base64,{data}'/>"
-    return plot_image
+    return HttpResponse(buf.getbuffer(), content_type="image/svg+xml")
 
 
 def index(request):
@@ -64,12 +62,9 @@ def index(request):
     forms = (RecordForm(initial={'tracker': t.id}, fh_data={'tracker_id': t.id, 'index_view': True}) for t in Tracker.objects.all())  # pylint:disable=no-member
     colors = cycle(('blue', 'green', 'red', 'purple'))
     trackers_and_forms_and_colors = zip(trackers, forms, colors)
-    plot_image = generate_this_weeks_plot()
-
     context = {
         "trackers": trackers,
         "trackers_and_forms_and_colors": trackers_and_forms_and_colors,
-        "plot_image": plot_image
     }
     return render(request, "index.html", context)
 
@@ -163,7 +158,3 @@ def tracker_delete(request, id):
     tracker = get_object_or_404(Tracker, id=id)
     tracker.delete()
     return redirect("home")
-
-
-def week_plot(request):
-    pass

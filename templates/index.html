@@ -13,8 +13,6 @@
     {% endfor %}
   </div>
   <div>
-    {% autoescape off %}
-    {{ plot_image }}
-    {% endautoescape %}
+    <img src={% url 'week_plot' %}>
   </div>
 {% endblock content %}

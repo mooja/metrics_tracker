@@ -18,6 +18,7 @@ from tracker import views
 
 urlpatterns = [
     path("", views.index, name="home"),
+    path("plots/week/", views.week_plot, name="week_plot"),
     path("trackers/", views.tracker_detail, name="tracker_detail"),
     path("trackers/<int:id>/", views.tracker_detail, name="tracker_detail"),
     path("trackers/<int:id>/delete/", views.tracker_delete, name="tracker_delete"),
