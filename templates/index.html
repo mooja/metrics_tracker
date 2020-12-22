@@ -12,7 +12,8 @@
       {% include "tracker/index_tracker.html" with tracker=tracker form=form color=color %} 
     {% endfor %}
   </div>
-  <div>
-    <img src={% url 'week_plot' %}>
-  </div>
+  <h3> This week </h3>
+  <img src="{% url 'week_plot' %}">
+  <h3> Last month </h3>
+  <img src="{% url 'four_week_plot' %}" class="mt-4">
 {% endblock content %}
