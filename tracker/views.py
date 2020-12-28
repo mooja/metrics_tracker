@@ -1,5 +1,6 @@
 import datetime
 import base64
+import warnings
 
 from io import BytesIO
 
@@ -182,7 +183,11 @@ def week_plot(request):
             locations, values, tick_label=dates, width=width, color=next(colors)
         )  # pylint:disable=no-member
 
-    figure.tight_layout()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        figure.tight_layout()
+    
     buf = BytesIO()
     figure.savefig(buf, format="svg")
     cache.set("week_plot", buf.getvalue())
