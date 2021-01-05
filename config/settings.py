@@ -16,10 +16,10 @@ MEDIA_ROOT = public_root('media')
 MEDIA_URL = env.str('MEDIA_URL', default='media/')
 STATIC_ROOT = public_root('static')
 STATIC_URL = env.str('STATIC_URL', default='static/')
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default='localhost')
 SECRET_KEY = env.str('SECRET_KEY')
-
 CACHES = {'default': env.cache('CACHE_URL')}
+LOGGING_LEVEL = env.str('LOGGING_LEVEL', default='WARNING')
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -76,6 +76,21 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': LOGGING_LEVEL,
+    },
+}
+
 
 
 # Internationalization

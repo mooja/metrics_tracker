@@ -1,0 +1,18 @@
+version: '3'
+
+volumes:
+  production_sqlite_data: {}
+
+services:
+  django-production:
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+    image: mooja/metrics_tracker_django_production
+    volumes:
+      - production_sqlite_data:/data
+    env_file:
+      - ./.envs/.production/.django
+    command: /start
+    ports:
+      - "8005:8005"
