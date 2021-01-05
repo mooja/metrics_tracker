@@ -1,5 +1,12 @@
+import importlib
+
+from pathlib import Path
+
 from django.urls import path, include
-from tracker import views
+from django.conf import settings
+
+from metrics_tracker.tracker import views
+
 
 urlpatterns = [
     path("", views.index, name="home"),

@@ -9,7 +9,7 @@
 {% block content %}
   <div class="w-full py-4 gap-x-1 flex flex-row flex-wrap justify-center">
     {% for tracker, form, color in trackers_and_forms_and_colors %}
-      {% include "tracker/index_tracker.html" with tracker=tracker form=form color=color %} 
+      {% include "index_tracker.html" with tracker=tracker form=form color=color %} 
     {% endfor %}
   </div>
   <h3> This week </h3>

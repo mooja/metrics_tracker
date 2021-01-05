@@ -19,8 +19,8 @@ from django.db.models import Sum
 import numpy as np
 from matplotlib.figure import Figure
 
-from tracker.models import Tracker, Record
-from tracker.forms import RecordForm, TrackerForm
+from .models import Tracker, Record
+from .forms import RecordForm, TrackerForm
 
 
 def index(request):

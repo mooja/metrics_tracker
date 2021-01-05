@@ -1,0 +1,5 @@
+DATABASE_URL=sqlite:////data/db.sqlite3
+DEBUG=true
+ALLOWED_HOSTS=['0.0.0.0']
+SECRET_KEY="abracadabjra"
+CACHE_URL=locmemcache://
