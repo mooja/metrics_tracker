@@ -17,4 +17,4 @@ services:
     # entrypoint: /entrypoint.sh
     command: /start
     env_file:
-      - ./.envs/.local/.django
+      - ./.envs/.local/.django/.env
