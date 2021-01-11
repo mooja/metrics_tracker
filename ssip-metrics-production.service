@@ -5,8 +5,8 @@ After=nginx.service,docker.serice
 
 [Service]
 WorkingDirectory=/home/mooja/metrics_tracker
-ExecStart=/usr/local/bin/docker-compose -f /home/mooja/metrics_tracker.production.yml up
-ExecStop=/usr/local/bin/docker-compose -f /home/mooja/metrics_tracker.production.yml down
+ExecStart=/usr/local/bin/docker-compose -f /home/mooja/metrics_tracker/production.yml up
+ExecStop=/usr/local/bin/docker-compose -f /home/mooja/metrics_tracker/production.yml down
 Restart=on-failure
 RestartSec=10
 
