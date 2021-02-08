@@ -4,6 +4,8 @@ import warnings
 
 from io import BytesIO
 
+from datetime import timezone, timedelta
+
 from itertools import cycle
 from collections import defaultdict
 
@@ -15,16 +17,34 @@ from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib import messages
 from django.core.cache import cache
 from django.db.models import Sum
+from django.core.exceptions import ObjectDoesNotExist
+from django.core import serializers
+from django.utils import timezone
 
 import numpy as np
 from matplotlib.figure import Figure
 
-from .models import Tracker, Record
-from .forms import RecordForm, TrackerForm
+from .models import Tracker, Record, Session
+from .forms import RecordForm, TrackerForm, SessionControlsForm, SessionSettingsForm
 
 
 def index(request):
     trackers = Tracker.objects.all()  # pylint:disable=no-member
+    for t in trackers:
+        try:
+            t.session
+        except ObjectDoesNotExist:
+            s = Session(tracker=t)
+            s.save()
+        if t.session.is_finished():
+            t.session.finish()
+        today = timezone.now().date()
+        last_session_update_day = t.session.session_count_update_timestamp.date()
+        if last_session_update_day != today:
+            t.session.reset_daily_count()
+
+    sessions_json = serializers.serialize('json', Session.objects.all())  # pylint:disable=no-member
+    session_forms = (SessionControlsForm(instance=t.session) for t in trackers)
     forms = (
         RecordForm(
             initial={"tracker": t.id}, fh_data={"tracker_id": t.id, "index_view": True}
@@ -32,12 +52,42 @@ def index(request):
         for t in Tracker.objects.all()  #pylint:disable=no-member
     )
     colors = cycle(("blue", "green", "red", "purple"))
-    trackers_and_forms_and_colors = zip(trackers, forms, colors)
+    trackers_and_forms_and_colors = zip(trackers, forms, colors, session_forms)
     context = {
         "trackers": trackers,
         "trackers_and_forms_and_colors": trackers_and_forms_and_colors,
+        "sessions_json": sessions_json
     }
     return render(request, "index.html", context)
+
+
+def session_detail(request, tracker_id):
+    tracker = get_object_or_404(Tracker, id=tracker_id)
+    if request.method == 'POST':
+        session_form = SessionControlsForm(request.POST, instance=tracker.session)
+        if session_form.is_valid():
+            session = session_form.save(commit=False)
+            if session_form.cleaned_data['action'] == "start":
+                session.begin()
+            elif session_form.cleaned_data['action'] == "pause":
+                session.pause()
+            elif session_form.cleaned_data['action'] == "resume":
+                session.resume()
+            elif session_form.cleaned_data['action'] == "stop":
+                session.finish()
+            elif session_form.cleaned_data['action'] == "log":
+                session.save_as_record()
+                cache.delete("week_plot")
+                cache.delete("four_week_plot")
+            elif session_form.cleaned_data['action'] == "reset":
+                session.reset()
+            else:
+                raise Exception(f"uknown action: {session_form.cleaned_data['action']}")
+            return redirect("home")
+        return HttpResponse("session form data is not valid: " + str(session_form.errors) )
+    return HttpResponse("get not implemented")
+
+    # pomodoro_session = (Session.objects.all().filter(status=='active')  # pylint:disable=no-member
 
 
 def tracker_detail(request, id=None, delete=False):
@@ -74,6 +124,7 @@ def tracker_detail(request, id=None, delete=False):
         context["form"] = TrackerForm()
     else:
         tracker = get_object_or_404(Tracker, id=id)
+        context["tracker"] = tracker
         context["form"] = TrackerForm(instance=tracker)
         context["record_form"] = RecordForm(
             initial={"tracker": tracker.id},
@@ -88,6 +139,7 @@ def tracker_detail(request, id=None, delete=False):
             .filter(tracker__id=id)
             .order_by("-date") 
         )
+        context["session_settings_form"] = SessionSettingsForm(instance=tracker.session)
 
     return render(request, "tracker/tracker_detail.html", context)
 
@@ -160,7 +212,7 @@ def week_plot(request):
 
     trackers = Tracker.objects.all()  # pylint: disable=no-member
 
-    figure = Figure(figsize=(8, 2))
+    figure = Figure(figsize=(7, 2))
     ax = figure.subplots()
     width = 0.20
     colors = cycle(("blue", "green", "red", "purple"))
@@ -168,7 +220,7 @@ def week_plot(request):
     for i, t in enumerate(trackers):
         dates = dict()
         for d in dates_this_week():
-            dates[d] = 0
+            dates[d] = timedelta()
 
         records = Record.objects.all().filter(  # pylint: disable=no-member
             tracker=t, date__gte=min(dates.keys())
@@ -178,7 +230,8 @@ def week_plot(request):
 
         dates, values = zip(*sorted(dates.items()))
         dates = [d.strftime("%a") for d in dates]
-        locations = [x + width * i for x in range(7)]
+        values = [(v / timedelta(hours=1)) for v in values]
+        locations = [x + width*i for x in range(7)]
         ax.bar(
             locations, values, tick_label=dates, width=width, color=next(colors)
         )  # pylint:disable=no-member
@@ -240,15 +293,30 @@ def four_week_plot(request):
     for i, t in enumerate(trackers):
         values = []
         for d in dates:
-            values.append(data[d][t.name]["num_hours__sum"] or 0)
+            values.append((data[d][t.name]["num_hours__sum"] or timedelta()) / timedelta(days=1))
         locations = [x + width * i - width for x in range(4)]
         ax.bar(
             locations, values, tick_label=dates_pretty, width=width, color=next(colors)
         )
 
     # save the image in cache
-    figure.tight_layout()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        figure.tight_layout()
     buf = BytesIO()
     figure.savefig(buf, format="svg")
     cache.set("four_week_plot", buf.getvalue())
     return HttpResponse(buf.getbuffer(), content_type="image/svg+xml")
+
+
+@require_POST
+def session_settings_detail(request, tracker_id):
+    tracker = get_object_or_404(Tracker, id=tracker_id)
+    form = SessionSettingsForm(request.POST, instance=tracker.session)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Session settings saved.")
+        return redirect("tracker_detail", tracker.id)
+    else:
+        messages.error(request, form.errors.as_json())
+        return redirect("tracker_detail", tracker.id)

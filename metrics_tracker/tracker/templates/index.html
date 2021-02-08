@@ -7,13 +7,19 @@
 {% block title %} Gwen's Metrics Tracker {% endblock title %} 
 
 {% block content %}
-  <div class="w-full py-4 gap-x-1 flex flex-row flex-wrap justify-center">
-    {% for tracker, form, color in trackers_and_forms_and_colors %}
-      {% include "tracker/index_tracker.html" with tracker=tracker form=form color=color %} 
+  {% autoescape off %}
+  <script>
+    let sessions = {{ sessions_json }}
+  </script>
+  {% endautoescape %}
+
+  <div class="w-full flex flex-col justify-between">
+    {% for tracker, form, color, session_form in trackers_and_forms_and_colors %}
+      {% include "tracker/index_tracker.html" with tracker=tracker form=form color=color session_form=session_form %} 
     {% endfor %}
   </div>
   <h3> This week </h3>
-  <img src="{% url 'week_plot' %}">
+  <img class="w-full" src="{% url 'week_plot' %}">
   <h3> Last month </h3>
-  <img src="{% url 'four_week_plot' %}" class="mt-4">
+  <img class="w-full" src="{% url 'four_week_plot' %}" class="mt-4">
 {% endblock content %}

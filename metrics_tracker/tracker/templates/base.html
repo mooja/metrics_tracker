@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 
 <html lang="en">
@@ -10,9 +11,12 @@
   {% block meta %}
     <meta name="description" content="Gwen's Metrics Tracker">
     <meta name="author" content="Max Peregrino">
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png'%}" />
   {% endblock %}
   {% block css %}
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <script src="/static/js/main.js"></script>
   {% endblock %}
 </head>
 
@@ -33,7 +37,7 @@
 
   </ul>
   {% endif %}
-<main class="w-3/5 m-auto">
+<main class="md:w-4/5 lg:w-3/5 mx-2 sm:mx-5 md:m-auto">
     {% block content %}
     {% endblock %}
 </main>

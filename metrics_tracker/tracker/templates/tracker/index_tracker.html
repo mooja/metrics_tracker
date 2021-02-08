@@ -1,33 +1,15 @@
 {% load crispy_forms_tags %}
 
-<div class="flex-auto w-10 my-1 py-3 px-2 
-    bg-{{ color }}-100 
-    border-{{ color }}-500 
-    border-t-4
-    border-l
-    border-r
-    border-b-8
-    flex flex-col no-wrap justify-start
+<div class="flex-auto mt-2 p-2
+    bg-{{ color }}-300 
+    border-{{ color }}-600
+    border-l-8
+    flex flex-col sm:flex-row wrap items-center
     ">
-
-  <div class="info w-full text-center">
-    <h3 class="name text-xl capitalize mb-1 text-center">
-      <a href="{% url 'tracker_detail' tracker.id %}">
-        {{ tracker.name }}
-      </a>
-    </h3>
-
-    <p class="hours-this-week my-4">
-      <span class="text-4xl">{{ tracker.hours_this_week }}</span> <br> hours this week
-    </p>
-
-    {% if tracker.hours_last_week %}
-    <p class="my-2">
-      {{ tracker.hours_last_week }} hours last week
-    </p>
-    {% endif %}
-  </div>
-  <div class="p-1 bg-{{ color }}-300 mt-auto flex justify-start content-center items-center">
-      {% crispy form %}
-  </div>
+  <h3 class="flex-initial w-full sm:w-1/3 text-center sm:text-left text-3xl capitalize">
+    <a href="{% url 'tracker_detail' tracker.id %}">
+      {{ tracker.name }}
+    </a>
+  </h3>
+  {% include "tracker/session_detail.html" with session=tracker.session session_form=session_form %}
 </div>

@@ -19,16 +19,13 @@
     </style>
 
 
-    <div class="forms flex flex-row nowrap">
-        {% crispy form %}
+    {% crispy form %}
 
-        {% if tracker.id %}
-            <form action="{% url 'tracker_delete' tracker.id %}" method="post" class="my-2 flex-initial border border-white">
-                {% csrf_token %}
-                <input type="submit" value="Delete Tracker" class="m-3 bg-red-500 rounded">
-            </form>
-        {% endif %}
+    {% if tracker %}
+    <div class="session-settings">
+      {% crispy session_settings_form %}
     </div>
+    {% endif %}
 
     {% if record_form %}
         <ul class="w-full mt-4 rounded flex flex-col">

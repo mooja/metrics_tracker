@@ -1,25 +1,30 @@
 import environ
 from pathlib import Path
 
-root = environ.Path(__file__) - 1  # get root of the project
+
 env = environ.Env()
 
+
+SECRET_KEY = env.str('SECRET_KEY')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default='localhost')
+CACHES = {'default': env.cache('CACHE_URL')}
+DATABASES = {'default': env.db_url('DATABASE_URL')}
+LOGGING_LEVEL = env.str('LOGGING_LEVEL', default='WARNING')
+
+
+root = environ.Path(__file__) - 2  # get root of the project
 SITE_ROOT = root()
 
 DEBUG = env.bool('DEBUG', default=False)
 TEMPLATE_DEBUG = DEBUG
 
-DATABASES = {'default': env.db_url('DATABASE_URL')}
-
 public_root = root.path('public/')
 MEDIA_ROOT = public_root('media')
 MEDIA_URL = env.str('MEDIA_URL', default='media/')
+
 STATIC_ROOT = public_root('static')
 STATIC_URL = env.str('STATIC_URL', default='static/')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default='localhost')
-SECRET_KEY = env.str('SECRET_KEY')
-CACHES = {'default': env.cache('CACHE_URL')}
-LOGGING_LEVEL = env.str('LOGGING_LEVEL', default='WARNING')
+
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -34,6 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -91,10 +97,11 @@ LOGGING = {
     },
 }
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [
+    str(root.path('static/')),
+]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
 
@@ -105,9 +112,3 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.1/howto/static-files/
-
-STATIC_URL = "/static/"

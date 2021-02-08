@@ -1,0 +1,20 @@
+{% load crispy_forms_tags %}
+{% load tracker_extras %}
+
+<style>
+  button {
+    min-width: 4rem;
+  }
+</style>
+
+<div class="flex-initial w-full sm:w-3/5 mt-2 pl-3 sm:mt-0 text-5xl text-opacity-80 bold flex flex-row justify-center sm:justify-start items-center" id="session-{{ session.tracker.id }}">
+  {% if session.status == "FINISHED" %}
+    <span class="timer">{{ session.target_duration|minutes }}:{{ session.target_duration|seconds}}</span>
+    <span class="text-gray-800 text-opacity-75 text-2xl ml-2"> / {{ session.target_duration|minutes }}:{{ session.target_duration|seconds }}</span>
+  {% else %}
+    <span class="timer">{{ session.active_duration|minutes }}:{{ session.active_duration|seconds}}</span>
+    <span class="text-gray-800 text-opacity-75 text-2xl ml-2"> / {{ session.target_duration|minutes }}:{{ session.target_duration|seconds }}</span>
+    <span class="nsessions ml-3 text-xl">({{ session.session_count_today }}/{{ session.target_session_count }})</span>
+  {% endif %}
+</div>
+{% crispy session_form %}

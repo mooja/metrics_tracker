@@ -11,7 +11,7 @@ from crispy_forms import layout
 
 from crispy_forms.layout import *  # pylint: disable=unused-wildcard-import
 
-from .models import Tracker, Record
+from .models import Tracker, Record, Session
 
 
 def validate_action(value):
@@ -86,7 +86,7 @@ class RecordForm(forms.ModelForm):
 
         record_detai_layout = Layout(
             Div(
-                Field("num_hours", css_class="w-12 px-1 py-2 mr-2 text-center flex-initial rounded border border-blue-500"),
+                Field("num_hours", css_class="px-1 py-2 mr-2 text-center flex-initial rounded border border-blue-500"),
                 HTML(" hour session on "),
                 Field("date", type="date", css_class="w-32 mx-2 px-1 py-2 text-center border border-blue-500 rounded "),
                 Submit("action", "update" if self.instance.id else "add", css_class="p-2 m-1 bg-blue-300 border rounded"),
@@ -106,3 +106,72 @@ class RecordForm(forms.ModelForm):
         widgets = {
             "tracker": forms.HiddenInput(),
         }
+
+
+class SessionSettingsForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.form_action = reverse("session_settings_detail", kwargs={'tracker_id': self['tracker'].value()})
+        self.helper.form_class = 'bg-gray-200 py-8 flex flex-row nowrap items-center'
+        self.helper.layout = Layout(
+            Hidden('tracker', self['tracker'].value()),
+            Field('target_session_count', self['target_session_count'].value(), css_class="flex-initial w-10 px-1 py-2 shadow mr-2 text-center"),
+            HTML('Session(s) per Day, with the duration of '),
+            Field('target_duration', self['target_duration'].value(), css_class="flex-initial w-20 px-1 py-2 mx-2 shadow text-center"),
+            HTML('<input type="submit" value="Update" class="flex-initial px-1 py-2 bg-green-300">')
+        )
+
+    class Meta:
+        model = Session
+        fields = ("tracker", "target_duration", "target_session_count")
+
+
+def ActionValidator(action):
+    actions_re = re.compile(r"start|stop|pause|resume|next|log|reset")
+    if not actions_re.match(action):
+        raise ValidationError("form does not suppert this action")
+
+
+class SessionControlsForm(forms.ModelForm):
+    action = forms.CharField(required=True, validators=[ActionValidator])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.form_class = "flex-initial w-full sm:w-1/3 mt-2 sm:mt-0 flex flex-row justify-center sm:justify-end"
+        self.helper.form_action = reverse("session_detail", kwargs={'tracker_id': self['tracker'].value()})
+        self.helper.layout = Layout(
+            Hidden('tracker', self['tracker'].value()),
+            Hidden('status', self['status'].value()),
+        )
+
+        if self['status'].value() == 'NEW':
+            self.helper.layout.append(
+               HTML('<button type="submit" name="action" class="bg-green-600 text-white font-bold px-1 py-2 ml-1" value="start">Start</button>') 
+            )
+
+        elif self['status'].value() == 'ACTIVE':
+            self.helper.layout.extend((
+               HTML('<button type="submit" name="action" class="bg-yellow-600 text-white font-bold px-1 py-2 ml-1" value="pause">Pause</button>'),
+               HTML('<button type="submit" name="action" class="bg-red-600 text-white font-bold px-1 py-2 ml-1" value="stop">Stop</button>')
+            ))
+
+        elif self['status'].value() == 'PAUSED':
+            self.helper.layout.extend((
+               HTML('<button type="submit" name="action" class="bg-green-600 text-white font-bold px-1 py-2 ml-1" value="resume">Resume</button>'),
+               HTML('<button type="submit" name="action" class="bg-red-600 text-white font-bold px-1 py-2 ml-1" value="stop">Stop</button>')
+            ))
+
+        elif self['status'].value() == 'FINISHED':
+            self.helper.layout.extend([
+               HTML('<button type="submit" name="action" class="bg-blue-600 text-white font-bold px-1 py-2 ml-1" value="log">Save</button>'),
+               HTML('<button type="submit" name="action" class="bg-red-600 text-white font-bold px-1 py-2 ml-1" value="reset">Discard</button>'),
+            ])
+
+    
+    class Meta:
+        model = Session
+        fields = ("tracker", "action", "status")
